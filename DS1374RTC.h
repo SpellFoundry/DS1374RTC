@@ -60,6 +60,8 @@ class DS1374RTC
 	bool setAlarm(time_t t);
 	bool setAlarm(tmElements_t &tm);
 
+	bool ackAlarm(void);	
+
 	bool setTime(time_t t);
 	bool setTime(tmElements_t &tm);
 
@@ -68,6 +70,8 @@ class DS1374RTC
 
 	bool setConfig(RTCConfig_t &config);
     bool chipPresent() { return exists; }
+
+    bool ackRTCOSF(void);
 
   private:
     static bool exists;

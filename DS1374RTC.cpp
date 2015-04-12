@@ -1,7 +1,7 @@
 /*
  * DS1374RTC.cpp - library for DS1374 RTC
   
-  Copyright (c) Jon Watkins 2013
+  Copyright (c) Jon Watkins 2013, 2015
   This library is intended to be uses with Arduino Time.h library functions
   This library is derived from the work of Michael Margolis on the 
   DS1307RTC.cpp code.
@@ -39,6 +39,9 @@
   Releases
   ========
   V1_0 - 10 Aug 2013 - Initial release
+  V1_1 - 11 Mar 2015 - Mod:    Added "ackAlarm" and "ackRTCOSF" functions to aid Alarm use
+                     - Bugfix: Changed the way the "SetAlarm(tmElements_t &tm)" was updating
+                               the Alarm time. It wasn't mapping correctly
 
   TODO:
   Status and trickle charger
@@ -127,8 +130,14 @@ bool DS1374RTC::setAlarm(tmElements_t &tm)
 {
   timeDate_t	timeDate;
   
+  // Convert this to an interval
+  timeDate.time = tm.Second;    // Seconds
+  timeDate.time += tm.Minute * SECS_PER_MIN;    // Minutes
+  timeDate.time += tm.Hour * SECS_PER_HOUR;
+  timeDate.time += tm.Day * SECS_PER_DAY;
+
   // convert to 32-bit raw time
-  timeDate.time = (time_t)makeTime(tm);
+  //timeDate.time = (time_t)makeTime(tm);
 
   Wire.beginTransmission(DS1374_CTRL_ID);
 #if ARDUINO >= 100  
@@ -146,11 +155,53 @@ bool DS1374RTC::setAlarm(tmElements_t &tm)
     exists = false;
     return false;
   }
-  exists = true;
-  return true;
+
 }
 
+bool DS1374RTC::ackAlarm(void)
+{
+  uint8_t statusByte = 0;
 
+  Wire.beginTransmission(DS1374_CTRL_ID);
+#if ARDUINO >= 100  
+  Wire.write((uint8_t)0x08);  // Set to status register  
+#else
+  Wire.send(0x08);            // Set to status register
+#endif  
+  if (Wire.endTransmission() != 0) {
+    exists = false;
+    return false;
+  }
+  exists = true;
+
+  // request the Status Register
+  Wire.requestFrom(DS1374_CTRL_ID, 1);
+  if (Wire.available() < 1) return false;
+#if ARDUINO >= 100
+  statusByte = Wire.read();
+#else
+  statusByte = Wire.receive();
+#endif
+
+  // clear Alarm Flag
+  statusByte &= ~0x01; 
+
+  Wire.beginTransmission(DS1374_CTRL_ID);
+#if ARDUINO >= 100  
+  Wire.write((uint8_t)0x08);      // Set to status register 
+  Wire.write(statusByte);  // Update Register  
+#else
+  Wire.send(0x08);                // Set to status register
+  Wire.send(statusByte);                // Update Register 
+#endif  
+  if (Wire.endTransmission() != 0) {
+    exists = false;
+    return false;
+  }
+  exists = true;
+
+  return true;
+}
 
 bool DS1374RTC::setTime(time_t t)
 {
@@ -270,10 +321,10 @@ bool DS1374RTC::setConfig(RTCConfig_t &config)
   // ******* Compile the config byte **********
   // ...Enable / Disable the RTC OScillator
   if(config.disableOsc > 0){
-	configByte |= 0x80;
+	 configByte |= 0x80;
   }
   else {
-	configByte &= ~0x80;
+	 configByte &= ~0x80;
   }
   // ...Enable / Disable the Watchdog or Alarm Counters
   if(config.enableCTR > 0){
@@ -347,6 +398,51 @@ bool DS1374RTC::setConfig(RTCConfig_t &config)
     return false;
   }
   exists = true;
+  return true;
+}
+
+bool DS1374RTC::ackRTCOSF(void)
+{
+  uint8_t statusByte = 0;
+
+  Wire.beginTransmission(DS1374_CTRL_ID);
+#if ARDUINO >= 100  
+  Wire.write((uint8_t)0x08);  // Set to status register  
+#else
+  Wire.send(0x08);            // Set to status register
+#endif  
+  if (Wire.endTransmission() != 0) {
+    exists = false;
+    return false;
+  }
+  exists = true;
+
+  // request the Status Register
+  Wire.requestFrom(DS1374_CTRL_ID, 1);
+  if (Wire.available() < 1) return false;
+#if ARDUINO >= 100
+  statusByte = Wire.read();
+#else
+  statusByte = Wire.receive();
+#endif
+
+  // clear OSF Flag
+  statusByte &= ~0x80; 
+
+  Wire.beginTransmission(DS1374_CTRL_ID);
+#if ARDUINO >= 100  
+  Wire.write((uint8_t)0x08);      // Set to status register 
+  Wire.write(statusByte);  // Update Register  
+#else
+  Wire.send(0x08);                // Set to status register
+  Wire.send(statusByte);                // Update Register 
+#endif  
+  if (Wire.endTransmission() != 0) {
+    exists = false;
+    return false;
+  }
+  exists = true;
+
   return true;
 }
 
