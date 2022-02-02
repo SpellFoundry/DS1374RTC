@@ -7,7 +7,7 @@
 #define DS1374RTC_h
 
 #include "Arduino.h"
-#include <Time.h>
+#include <TimeLib.h>
 #include <Wire.h>
 
 union timeDate_t{

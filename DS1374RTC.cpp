@@ -155,6 +155,7 @@ bool DS1374RTC::setAlarm(tmElements_t &tm)
     exists = false;
     return false;
   }
+  return true;
 
 }
 
@@ -212,7 +213,7 @@ bool DS1374RTC::setTime(time_t t)
 
   breakTime(t, tm);
 //  tm.Second |= 0x80;  // stop the clock 
-  setTime(tm); 
+  return setTime(tm); 
 //  tm.Second &= 0x7f;  // start the clock
 //  write(tm); 
 }
