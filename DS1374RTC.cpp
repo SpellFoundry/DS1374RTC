@@ -310,7 +310,7 @@ bool DS1374RTC::readTime(tmElements_t &tm)
 #endif
   breakTime(timeDate.time, tm);
 
-  if (value & 0x80) return false; // clock is halted TODO
+  //if (value & 0x80) return false; // clock is halted TODO //extra comment: this if statement is true even if the clock works and is running
   return true;
 }
 
