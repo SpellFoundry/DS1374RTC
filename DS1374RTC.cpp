@@ -155,6 +155,7 @@ bool DS1374RTC::setAlarm(tmElements_t &tm)
     exists = false;
     return false;
   }
+  return true;
 
 }
 
@@ -212,7 +213,7 @@ bool DS1374RTC::setTime(time_t t)
 
   breakTime(t, tm);
 //  tm.Second |= 0x80;  // stop the clock 
-  setTime(tm); 
+  return setTime(tm); 
 //  tm.Second &= 0x7f;  // start the clock
 //  write(tm); 
 }
@@ -309,7 +310,7 @@ bool DS1374RTC::readTime(tmElements_t &tm)
 #endif
   breakTime(timeDate.time, tm);
 
-  if (value & 0x80) return false; // clock is halted TODO
+  //if (value & 0x80) return false; // clock is halted TODO //extra comment: this if statement is true even if the clock works and is running
   return true;
 }
 
